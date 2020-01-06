@@ -45,7 +45,7 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                '<controller:(manager)>/<action:(edit|delete)>/<id:\d+>' => '<controller>/<action>',
+               'profile/<nickname:\w+>' => 'user/profile/view',
             ],
         ],
     ],

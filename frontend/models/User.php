@@ -24,7 +24,7 @@ use yii\web\IdentityInterface;
 class User extends ActiveRecord implements IdentityInterface
 {
     const STATUS_DELETED = 0;
-    const STATUS_ACTIVE = 9;
+    const STATUS_ACTIVE = 10;
 
 
     /**
@@ -43,6 +43,11 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             TimestampBehavior::className(),
         ];
+    }
+
+    public function getNickname()
+    {
+        return $this->nickname ? $this->nickname : $this->id;
     }
 
     /**
@@ -96,6 +101,11 @@ class User extends ActiveRecord implements IdentityInterface
     public static function findByUsername($username)
     {
         return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
+    }
+    public static function findByNickname($nickname)
+    {
+        return static::find()->where(['nickname' => $nickname, 'status' => self::STATUS_ACTIVE])
+                             ->orWhere(['id' => $nickname, 'status' => self::STATUS_ACTIVE])->one();
     }
     public static function findById($id)
     {
@@ -212,4 +222,35 @@ class User extends ActiveRecord implements IdentityInterface
     {
         $this->password_reset_token = null;
     }
+
+    public function getSubscriptions()
+    {
+        $redis = Yii::$app->redis;
+        $ids = $redis->smembers("user:{$this->id}:subscriptions");
+        return self::find()->select('id, username, nickname')->where(['id' => $ids])->asArray()->all();
+    }
+    public function getFollowers()
+    {
+        $redis = Yii::$app->redis;
+        $ids = $redis->smembers("user:{$this->id}:followers");
+        return self::find()->select('id, username, nickname')->where(['id' => $ids])->asArray()->all();
+    }
+    public function getFollowerCount()
+    {
+        $redis = Yii::$app->redis;
+        return $redis->scard("user:{$this->id}:followers");
+    }
+    public function getSubscriptionCount()
+    {
+        $redis = Yii::$app->redis;
+        return $redis->scard("user:{$this->id}:subscriptions");
+    }
+    public function getMutualSubscriptions($id)
+    {
+        $redis = Yii::$app->redis;
+        $userId = Yii::$app->user->id;
+        $ids = $redis->sinter("user:{$id}:subscriptions", "user:{$userId}:subscriptions");
+        return self::find()->select('id, username, nickname')->where(['id' => $ids])->asArray()->all();
+    }
+
 }
