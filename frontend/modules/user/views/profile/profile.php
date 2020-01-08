@@ -3,29 +3,66 @@
 use yii\helpers\Html;
 use yii\helpers\HtmlPurifier;
 use yii\helpers\Url;
+use dosamigos\fileupload\FileUpload;
+
 ?>
 
 
 
+<img src="<?= $user->getPicture() ?>" id="profile-picture">
+
+<?php if(Yii::$app->user->identity && $user->equals(Yii::$app->user->identity)) : ?>
+    <div style="display:none" class="alert alert-success display-none" id="profile-image-success">Profile image updated</div>
+    <div style="display:none" class="alert alert-danger display-none" id="profile-image-fail"></div>
 
 
+    <?= FileUpload::widget([
+        'model' => $modelPicture,
+        'attribute' => 'picture',
+        'url' => ['/user/profile/upload-picture'], // your url, this is just for demo purposes,
+        'options' => ['accept' => 'image/*'],
+        'clientOptions' => [
+            'maxFileSize' => 2000000
+        ],
+        // Also, you can specify jQuery-File-Upload events
+        // see: https://github.com/blueimp/jQuery-File-Upload/wiki/Options#processing-callback-options
+        'clientEvents' => [
+            'fileuploaddone' => 'function(e, data) {
+            if (data.result.success) {
+                  $("#profile-image-success").show();
+                  $("#profile-image-fail").hide();
+                  $("#profile-picture").attr("src", data.result.pictureUri);
+              } else {
+                  $("#profile-image-fail").html(data.result.errors.picture).show();
+                  $("#profile-image-success").hide();
+              }
+        }',
+        ],
+    ]); ?>
 
-<h3><?= Html::encode($user->nickname) ?></h3>
+<?php else : ?>
 
-<p>
-    <?=
-        HtmlPurifier::process($user->about);
-    ?>
-</p>
 
-<a href="<?= Url::to(['/user/profile/subscribe', 'id' => $user->id]) ?>" id="<?= $user->id ?>" class="btn btn-primary">Subscribe</a>
+    <h3><?= Html::encode($user->nickname) ?></h3>
 
-<a href="<?= Url::to(['/user/profile/unsubscribe', 'id' => $user->id]) ?>" id="<?= $user->id ?>" class="btn btn-primary">Unsubscribe</a>
+    <p>
+        <?=
+            HtmlPurifier::process($user->about);
+        ?>
+    </p>
+
+
+    <a href="<?= Url::to(['/user/profile/subscribe', 'id' => $user->id]) ?>" id="<?= $user->id ?>" class="btn btn-primary">Subscribe</a>
+
+    <a href="<?= Url::to(['/user/profile/unsubscribe', 'id' => $user->id]) ?>" id="<?= $user->id ?>" class="btn btn-primary">Unsubscribe</a>
+
+<?php endif; ?>
 
 <!-- Button trigger modal -->
 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong">
     Subscribers: <?= $user->getSubscriptionCount() ?>
 </button>
+
 
 <!-- Modal -->
 <div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
@@ -39,7 +76,9 @@ use yii\helpers\Url;
             </div>
             <div class="modal-body">
 
-                <?php if ($mutualSubscriptions = $user->getMutualSubscriptions($user->id)) : ?>
+                <?php if (Yii::$app->user->identity && !$user->equals(Yii::$app->user->identity)
+                           && $mutualSubscriptions = $user->getMutualSubscriptions($user->id)) : ?>
+             
                     Mutual subscribers: <br>
                     <?php foreach ($mutualSubscriptions as $subscriber) : ?>
                         <a href="<?= Url::to(['/user/profile/view', 'nickname' => $subscriber['nickname']]) ?>">
