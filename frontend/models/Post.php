@@ -38,6 +38,11 @@ class Post extends \yii\db\ActiveRecord
         ];
     }
 
+    public function getId()
+    {
+        return $this->id;
+    }
+
     public static function findById($id)
     {
         return self::findOne(['id' => $id]);
@@ -47,7 +52,6 @@ class Post extends \yii\db\ActiveRecord
     {
         return $this->hasOne(User::className(), ['id' => 'user_id'])->one();
     }
-
     public static function getPicture($id)
     {
         return Yii::$app->storage->getPicture(self::findById($id)->filename);

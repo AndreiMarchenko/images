@@ -236,6 +236,11 @@ class User extends ActiveRecord implements IdentityInterface
         $ids = $redis->smembers("user:{$this->id}:followers");
         return self::find()->select('id, username, nickname')->where(['id' => $ids])->asArray()->all();
     }
+    public function getPostCount()
+    {
+        $model = new Post();
+        return $model->find()->where(['user_id' => $this->id])->count();
+    }
     public function getFollowerCount()
     {
         $redis = Yii::$app->redis;
@@ -253,12 +258,25 @@ class User extends ActiveRecord implements IdentityInterface
         $ids = $redis->sinter("user:{$id}:subscriptions", "user:{$userId}:subscriptions");
         return self::find()->select('id, username, nickname')->where(['id' => $ids])->asArray()->all();
     }
-
+    public function getPosts()
+    {
+        $model = new Post();
+        return $model->find()->where(['user_id' => $this->id])->all();
+    }
     public function getPicture()
     {
         if($this->picture) {
             return Yii::$app->storage->getPicture($this->picture);
         }
         return self::DEFAULT_PICTURE;
+    }
+    public function isSubscribed($id)
+    {
+        $redis = Yii::$app->redis;
+        $ids = $redis->smembers("user:{$id}:followers");
+        if(in_array($this->id, $ids)) {
+            return true;
+        }
+        return false;
     }
 }

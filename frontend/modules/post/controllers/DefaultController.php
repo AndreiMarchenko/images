@@ -36,12 +36,15 @@ class DefaultController extends Controller
        }
        Yii::$app->response->format = Response::FORMAT_JSON;
 
-
+      
        $id = Yii::$app->request->post('id');
        $post = Post::findById($id);
-
-
+    //    echo '<pre>';
+    //    print_r($post);
+    //    echo'</pre>';die;
+       
        $post->like(Yii::$app->user->identity);
+      
        return [
         'likesCount' => $post->countLikes(),
        ];

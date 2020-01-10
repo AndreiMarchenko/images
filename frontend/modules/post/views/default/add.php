@@ -12,7 +12,7 @@ use yii\helpers\Html;
 
 <?= $form->field($model, 'description'); ?>
 
-<?= Html::submitButton('submit', ['class' => 'btn btn-primary']); ?>
+<?= Html::submitButton('post', ['class' => 'btn btn-primary']); ?>
 
 
 <?php ActiveForm::end() ?>

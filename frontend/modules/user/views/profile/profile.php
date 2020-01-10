@@ -1,165 +1,179 @@
 <?php
+/* @var $this yii\web\View */
+/* @var $user frontend\models\User */
+/* @var $currentUser frontend\models\User */
+/* @var $modelPicture frontend\modules\user\models\forms\PictureForm */
 
+use yii\helpers\Url;
 use yii\helpers\Html;
 use yii\helpers\HtmlPurifier;
-use yii\helpers\Url;
 use dosamigos\fileupload\FileUpload;
 
+$this->title = Html::encode($user->username);
 ?>
 
 
-
-<img src="<?= $user->getPicture() ?>" id="profile-picture">
-
-<?php if(Yii::$app->user->identity && $user->equals(Yii::$app->user->identity)) : ?>
-    <div style="display:none" class="alert alert-success display-none" id="profile-image-success">Profile image updated</div>
-    <div style="display:none" class="alert alert-danger display-none" id="profile-image-fail"></div>
+<div class="page-posts no-padding">
+    <div class="row">
+        <div class="page page-post col-sm-12 col-xs-12 post-82">
 
 
-    <?= FileUpload::widget([
-        'model' => $modelPicture,
-        'attribute' => 'picture',
-        'url' => ['/user/profile/upload-picture'], // your url, this is just for demo purposes,
-        'options' => ['accept' => 'image/*'],
-        'clientOptions' => [
-            'maxFileSize' => 2000000
-        ],
-        // Also, you can specify jQuery-File-Upload events
-        // see: https://github.com/blueimp/jQuery-File-Upload/wiki/Options#processing-callback-options
-        'clientEvents' => [
-            'fileuploaddone' => 'function(e, data) {
-            if (data.result.success) {
-                  $("#profile-image-success").show();
-                  $("#profile-image-fail").hide();
-                  $("#profile-picture").attr("src", data.result.pictureUri);
-              } else {
-                  $("#profile-image-fail").html(data.result.errors.picture).show();
-                  $("#profile-image-success").hide();
-              }
-        }',
-        ],
-    ]); ?>
+            <div class="blog-posts blog-posts-large">
 
-<?php else : ?>
+                <div class="row">
+
+                    <!-- profile -->
+                    <article class="profile col-sm-12 col-xs-12">                                            
+                        <div class="profile-title">
+                            <img src="<?php echo $user->getPicture(); ?>" id="profile-picture"  class="author-image" />
+
+                            <div class="author-name"><?php echo Html::encode($user->username); ?></div>
+
+                            <?php if ($currentUser && $currentUser->equals($user)): ?>
+
+                                <?=
+                                FileUpload::widget([
+                                    'model' => $modelPicture,
+                                    'attribute' => 'picture',
+                                    'url' => ['/user/profile/upload-picture'], // your url, this is just for demo purposes,
+                                    'options' => ['accept' => 'image/*'],
+                                    'clientEvents' => [
+                                        'fileuploaddone' => 'function(e, data) {
+                                            if (data.result.success) {
+                                                $("#profile-image-success").show();
+                                                $("#profile-image-fail").hide();
+                                                $("#profile-picture").attr("src", data.result.pictureUri);
+                                            } else {
+                                                $("#profile-image-fail").html(data.result.errors.picture).show();
+                                                $("#profile-image-success").hide();
+                                            }
+                                        }',
+                                    ],
+                                ]);
+                                ?>
+                                <a href="#" class="btn btn-default">Edit profile</a>
+
+                            <?php endif; ?>
+
+                            <!--                            <a href="#" class="btn btn-default">Upload profile image</a>-->
+                            
+                            <br/> 
+                            <br/> 
+
+                            <div class="alert alert-success display-none" id="profile-image-success">Profile image updated</div>
+                            <div class="alert alert-danger display-none" id="profile-image-fail"></div>
+                        </div>
+
+                        <?php if ($currentUser && !$currentUser->equals($user)): ?>
+                            <a href="<?php echo Url::to(['/user/profile/subscribe', 'id' => $user->getId()]); ?>"
+                             class="btn btn-info <?= ($currentUser->isSubscribed($user->id)) ? 'display-none': '' ?>">Subscribe</a>
+                            <a href="<?php echo Url::to(['/user/profile/unsubscribe', 'id' => $user->getId()]); ?>" 
+                            class="btn btn-info <?= ($currentUser->isSubscribed($user->id)) ? '': 'display-none'?>">Unsubscribe</a>
+                            <hr>
+                            <h5>Friends, who are also following <?php echo Html::encode($user->username); ?>: </h5>
+                            <div class="row">
+                                <?php foreach ($currentUser->getMutualSubscriptions($user->id) as $item): ?>
+                                    <div class="col-md-12">
+                                        <a href="<?php echo Url::to(['/user/profile/view', 'username' => $item['username']]); ?>">
+                                            <?php echo Html::encode($item['username']); ?>
+                                        </a>
+                                    </div>                
+                                <?php endforeach; ?>
+                            </div>
+                            <hr>
+                        <?php endif; ?>
+                            
+                        <?php if ($user->about): ?>
+                            <div class="profile-description">
+                                <p><?php echo HtmlPurifier::process($user->about); ?></p>
+                            </div>
+                        <?php endif; ?>
+                            
+                        <div class="profile-bottom">
+                            <div class="profile-post-count">
+                                <span><?php echo $user->getPostCount(); ?> posts</span>
+                            </div>
+                            <div class="profile-followers">
+                                <a href="#" data-toggle="modal" data-target="#myModal2"><?php echo $user->getFollowerCount(); ?> followers</a>
+                            </div>
+                            <div class="profile-following">
+                                <a href="#" data-toggle="modal" data-target="#myModal1"><?php echo $user->getSubscriptionCount(); ?> following</a>    
+                            </div>
+                        </div>
+
+                    </article>
+
+                    <div class="col-sm-12 col-xs-12">
+                        <div class="row profile-posts">
+                            <?php foreach($user->getPosts() as $post): ?>
+                            <div class="col-md-4 profile-post">
+                                <a href="<?php echo Url::to(['/post/default/view', 'id' => $post->getId()]); ?>">
+                                    <img src="<?php echo Yii::$app->storage->getPicture($post->filename); ?>" class="author-image" />
+                                </a>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
 
 
-    <h3><?= Html::encode($user->nickname) ?></h3>
+                </div>
 
-    <p>
-        <?=
-            HtmlPurifier::process($user->about);
-        ?>
-    </p>
+            </div>
+        </div>
 
+    </div>
+</div>
 
-    <a href="<?= Url::to(['/user/profile/subscribe', 'id' => $user->id]) ?>" id="<?= $user->id ?>" class="btn btn-primary">Subscribe</a>
-
-    <a href="<?= Url::to(['/user/profile/unsubscribe', 'id' => $user->id]) ?>" id="<?= $user->id ?>" class="btn btn-primary">Unsubscribe</a>
-
-<?php endif; ?>
-
-<!-- Button trigger modal -->
-<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong">
-    Subscribers: <?= $user->getSubscriptionCount() ?>
-</button>
-
-
-<!-- Modal -->
-<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+<!-- Modal subscriptions -->
+<div class="modal fade" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLongTitle"></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Subscriptions</h4>
             </div>
             <div class="modal-body">
-
-                <?php if (Yii::$app->user->identity && !$user->equals(Yii::$app->user->identity)
-                           && $mutualSubscriptions = $user->getMutualSubscriptions($user->id)) : ?>
-             
-                    Mutual subscribers: <br>
-                    <?php foreach ($mutualSubscriptions as $subscriber) : ?>
-                        <a href="<?= Url::to(['/user/profile/view', 'nickname' => $subscriber['nickname']]) ?>">
-                            <?php
-                            if ($subscriber['nickname']) {
-                                echo $subscriber['nickname'];
-                            } else {
-                                echo $subscriber['id'];
-                            }
-                            ?>
+                <div class="row">
+                <?php foreach ($user->getSubscriptions() as $subscription): ?>
+                    <div class="col-md-12">
+                        <a href="<?php echo Url::to(['/user/profile/view', 'username' => $subscription['username']]); ?>">
+                            <?php echo Html::encode($subscription['username']); ?>
                         </a>
-                        <br>
-                    <?php endforeach; ?>
-                    <br>
-                <?php endif; ?>
-                <br>
-
-
-                Subscribers:<br>
-                <?php foreach ($subscribers as $subscriber) : ?>
-                    <a href="<?= Url::to(['/user/profile/view', 'nickname' => $subscriber['nickname']]) ?>">
-                        <?php
-                        if ($subscriber['nickname']) {
-                            echo $subscriber['nickname'];
-                        } else {
-                            echo $subscriber['id'];
-                        }
-                        ?>
-                    </a>
-                    <br>
+                    </div>                
                 <?php endforeach; ?>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
+<!-- Modal subscriptions -->
 
-
-<!-- Button trigger modal -->
-<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong2">
-    Followers: <?= $user->getFollowerCount() ?>
-</button>
-
-<!-- Modal -->
-<div class="modal fade" id="exampleModalLong2" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+<!-- Modal followers -->
+<div class="modal fade" id="myModal2" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLongTitle"></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Followers</h4>
             </div>
             <div class="modal-body">
-                Followers:<br>
-                <?php foreach ($followers as $follower) : ?>
-                    <a href="<?= Url::to(['/user/profile/view', 'nickname' => $follower['nickname']]) ?>">
-                        <?php
-                        if ($follower['nickname']) {
-                            echo $follower['nickname'];
-                        } else {
-                            echo $follower['id'];
-                        }
-                        ?>
-                    </a>
-                    <br>
+                <div class="row">
+                <?php foreach ($user->getFollowers() as $follower): ?>
+                    <div class="col-md-12">
+                        <a href="<?php echo Url::to(['/user/profile/view', 'username' => $follower['username']]); ?>">
+                            <?php echo Html::encode($follower['username']); ?>
+                        </a>
+                    </div>                
                 <?php endforeach; ?>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
-
-
-
-<script>
-    $('#myModal').on('shown.bs.modal', function() {
-        $('#myInput').trigger('focus')
-    })
-</script>
+<!-- Modal followers -->

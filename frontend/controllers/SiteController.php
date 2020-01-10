@@ -11,6 +11,7 @@ use yii\web\Controller;
 use frontend\models\User;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
+use frontend\models\Feed;
 
 /**
  * Site controller
@@ -40,9 +41,14 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        $users = User::GetUserList();
+        if(Yii::$app->user->isGuest) {
+            return $this->redirect('/user/default/login');
+        }
+        $currentUser = Yii::$app->user->identity;
+        $feed = Feed::getFeed($currentUser->id);
         return $this->render('index', [
-            'users' => $users,
+            'currentUser' => $currentUser,
+            'feed' => $feed,
         ]);
     }
 
